@@ -14,5 +14,5 @@ else
 fi
 
 mkdir -p "$ROOT/dist"
-cp "$ROOT/android/app/build/outputs/apk/debug/app-debug.apk" "$ROOT/dist/bridge-android.apk"
-echo "Built: $ROOT/dist/bridge-android.apk"
+cp "$ROOT/android/app/build/outputs/apk/debug/app-debug.apk" "$ROOT/dist/neardoc-android.apk"
+echo "Built: $ROOT/dist/neardoc-android.apk"

@@ -30,7 +30,7 @@ import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
 /**
- * Local-network authenticated client for LinkBridge (QR pairing, file transfer, clipboard sync).
+ * Local-network authenticated client for NearDoc (QR pairing, file transfer, clipboard sync).
  */
 final class PairingClient {
     private static final String PREFS = "linkbridge_pair";
@@ -230,7 +230,7 @@ final class PairingClient {
                 out.flush();
                 readLineAscii(socket.getInputStream());
             } catch (Exception ignored) {
-                // Silent best-effort when Mac is asleep or Bridge is closed.
+                // Silent best-effort when Mac is asleep or NearDoc is closed.
             }
         }, "BridgeNotifPush").start();
     }
@@ -311,7 +311,7 @@ final class PairingClient {
 
                     String reply = readLineAscii(socket.getInputStream());
                     if ("OK".equals(reply)) {
-                        callback.onComplete(true, "Sent " + name + " (" + totalMb + " MB) to " + mac.macName + " (Downloads/Bridge).");
+                        callback.onComplete(true, "Sent " + name + " (" + totalMb + " MB) to " + mac.macName + " (Downloads/NearDoc).");
                     } else {
                         callback.onComplete(false, "Mac rejected " + name + " (" + reply + ").");
                     }
@@ -388,11 +388,11 @@ final class PairingClient {
         ContentResolver resolver = context.getContentResolver();
         ContentValues values = new ContentValues();
         values.put(MediaStore.MediaColumns.DISPLAY_NAME, fileName);
-        values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/Bridge");
+        values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/NearDoc");
         values.put(MediaStore.MediaColumns.IS_PENDING, 1);
 
         Uri uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values);
-        if (uri == null) throw new IOException("Could not create Downloads/Bridge entry.");
+        if (uri == null) throw new IOException("Could not create Downloads/NearDoc entry.");
 
         try (OutputStream out = resolver.openOutputStream(uri)) {
             if (out == null) throw new IOException("Could not open Downloads output stream.");

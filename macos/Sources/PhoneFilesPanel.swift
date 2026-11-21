@@ -16,7 +16,7 @@ final class PhoneFilesPanel: NSObject, NSTableViewDataSource, NSTableViewDelegat
         ("Screen Recordings (All Android)", "__ALL_RECORDINGS__"),
         ("Movies", "/sdcard/Movies"),
         ("Downloads", "/sdcard/Download"),
-        ("Bridge Folder", "/sdcard/Download/Bridge"),
+        ("NearDoc Folder", "/sdcard/Download/NearDoc"),
         ("Documents", "/sdcard/Documents")
     ]
 
@@ -254,11 +254,11 @@ final class PhoneFilesPanel: NSObject, NSTableViewDataSource, NSTableViewDelegat
         activePullProcess = nil
         if pullCancelled {
             try? FileManager.default.removeItem(atPath: localPath)
-            throw NSError(domain: "Bridge", code: -1, userInfo: [NSLocalizedDescriptionKey: "Transfer stopped by user."])
+            throw NSError(domain: "NearDoc", code: -1, userInfo: [NSLocalizedDescriptionKey: "Transfer stopped by user."])
         }
         guard proc.terminationStatus == 0 else {
             let msg = String(data: data, encoding: .utf8) ?? "adb pull failed"
-            throw NSError(domain: "Bridge", code: Int(proc.terminationStatus), userInfo: [NSLocalizedDescriptionKey: msg])
+            throw NSError(domain: "NearDoc", code: Int(proc.terminationStatus), userInfo: [NSLocalizedDescriptionKey: msg])
         }
     }
 
@@ -274,7 +274,7 @@ final class PhoneFilesPanel: NSObject, NSTableViewDataSource, NSTableViewDelegat
         pauseBtn.title = "⏸ Pause"
         pauseBtn.isEnabled = true
         stopBtn.isEnabled = true
-        statusLabel.stringValue = "Copying \(chosen.count) file(s) to Downloads/Bridge…"
+        statusLabel.stringValue = "Copying \(chosen.count) file(s) to Downloads/NearDoc…"
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self, let serial = self.activeSerialProvider() else { return }
             var savedURLs: [URL] = []
@@ -293,7 +293,7 @@ final class PhoneFilesPanel: NSObject, NSTableViewDataSource, NSTableViewDelegat
                     self.pauseBtn.isEnabled = false
                     self.stopBtn.isEnabled = false
                     if !self.pullCancelled {
-                        self.statusLabel.stringValue = "Saved \(savedURLs.count) file(s) to Downloads/Bridge."
+                        self.statusLabel.stringValue = "Saved \(savedURLs.count) file(s) to Downloads/NearDoc."
                         if !savedURLs.isEmpty { NSWorkspace.shared.activateFileViewerSelecting(savedURLs) }
                     }
                 }
@@ -354,11 +354,11 @@ final class PhoneFilesPanel: NSObject, NSTableViewDataSource, NSTableViewDelegat
 
     func filePromiseProvider(_ filePromiseProvider: NSFilePromiseProvider, writePromiseTo url: URL, completionHandler: @escaping (Error?) -> Void) {
         guard let item = filePromiseProvider.userInfo as? RemoteItem else {
-            completionHandler(NSError(domain: "Bridge", code: 1, userInfo: [NSLocalizedDescriptionKey: "Missing file info"]))
+            completionHandler(NSError(domain: "NearDoc", code: 1, userInfo: [NSLocalizedDescriptionKey: "Missing file info"]))
             return
         }
         guard let serial = activeSerialProvider() else {
-            completionHandler(NSError(domain: "Bridge", code: 2, userInfo: [NSLocalizedDescriptionKey: "Phone is not connected"]))
+            completionHandler(NSError(domain: "NearDoc", code: 2, userInfo: [NSLocalizedDescriptionKey: "Phone is not connected"]))
             return
         }
         DispatchQueue.main.async { self.statusLabel.stringValue = "Pulling \(item.name) to \(url.deletingLastPathComponent().lastPathComponent)…" }

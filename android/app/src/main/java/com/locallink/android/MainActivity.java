@@ -29,7 +29,7 @@ import com.journeyapps.barcodescanner.ScanOptions;
 import java.util.List;
 
 /**
- * Local-only Android companion for Bridge:
+ * Local-only Android companion for NearDoc:
  * QR pairing, two-way Wi-Fi file transfer, and clipboard sync.
  */
 public final class MainActivity extends AppCompatActivity {
@@ -73,7 +73,7 @@ public final class MainActivity extends AppCompatActivity {
                     @Override public void onFileReceived(String fileName) {
                         runOnUiThread(() -> {
                             pollInFlight = false;
-                            String msg = "Received " + fileName + " → Downloads/Bridge.";
+                            String msg = "Received " + fileName + " → Downloads/NearDoc.";
                             showStatus(msg);
                             LocalLog.add(MainActivity.this, msg);
                         });
@@ -102,7 +102,7 @@ public final class MainActivity extends AppCompatActivity {
             }
             String[] fields = contents.trim().split("\\|", -1);
             if (fields.length != 4 || !"LB1".equals(fields[0])) {
-                showStatus("That QR code is not a Bridge pairing code.");
+                showStatus("That QR code is not a NearDoc pairing code.");
                 LocalLog.add(this, "Rejected unrecognized QR code");
                 return;
             }
@@ -131,7 +131,7 @@ public final class MainActivity extends AppCompatActivity {
 
         setContentView(createView());
         refreshPairedState();
-        LocalLog.add(this, "Bridge opened");
+        LocalLog.add(this, "NearDoc opened");
     }
 
     @Override
@@ -198,7 +198,7 @@ public final class MainActivity extends AppCompatActivity {
         root.setBackgroundColor(Color.rgb(15, 23, 42));
         scroll.addView(root);
 
-        TextView title = text("Bridge", 32, Color.WHITE);
+        TextView title = text("NearDoc", 32, Color.WHITE);
         title.setGravity(Gravity.CENTER);
         root.addView(title);
 
@@ -212,10 +212,10 @@ public final class MainActivity extends AppCompatActivity {
         pairedBanner.setBackgroundColor(Color.rgb(30, 41, 59));
         root.addView(pairedBanner, fullWidthParams(0));
 
-        Button scan = actionButton("Scan Bridge QR on Mac", v -> {
+        Button scan = actionButton("Scan NearDoc QR on Mac", v -> {
             ScanOptions options = new ScanOptions();
             options.setDesiredBarcodeFormats(ScanOptions.QR_CODE);
-            options.setPrompt("Scan the QR shown in Bridge on your Mac");
+            options.setPrompt("Scan the QR shown in NearDoc on your Mac");
             options.setBeepEnabled(false);
             options.setOrientationLocked(false);
             qrScanner.launch(options);
@@ -271,7 +271,7 @@ public final class MainActivity extends AppCompatActivity {
                 }
                 @Override public void onFileReceived(String fileName) {
                     runOnUiThread(() -> {
-                        String msg = "Saved " + fileName + " to Downloads/Bridge.";
+                        String msg = "Saved " + fileName + " to Downloads/NearDoc.";
                         showStatus(msg);
                         LocalLog.add(MainActivity.this, msg);
                     });
@@ -365,7 +365,7 @@ public final class MainActivity extends AppCompatActivity {
         root.addView(developer, fullWidthParams(6));
 
         Button logs = actionButton("View diagnostic log", v -> new AlertDialog.Builder(this)
-            .setTitle("Bridge log")
+            .setTitle("NearDoc log")
             .setMessage(LocalLog.read(this))
             .setPositiveButton("Close", null)
             .show());
@@ -388,7 +388,7 @@ public final class MainActivity extends AppCompatActivity {
             pairedBanner.setText("PAIRED WITH " + mac.macName.toUpperCase() + "\n" + mac.host + ":" + mac.port + " · Auto-receiving files & clipboard while open");
             pairedBanner.setBackgroundColor(Color.rgb(20, 62, 48));
         } else {
-            pairedBanner.setText("PRIVATE LOCAL BRIDGE\nPut both devices on the same Wi-Fi, open Bridge on Mac, click Pair phone with QR, and scan here.");
+            pairedBanner.setText("PRIVATE LOCAL COMPANION\nPut both devices on the same Wi-Fi, open NearDoc on Mac, click Pair phone with QR, and scan here.");
             pairedBanner.setBackgroundColor(Color.rgb(30, 41, 59));
         }
     }
@@ -396,7 +396,7 @@ public final class MainActivity extends AppCompatActivity {
     private void copyToClipboard(String text) {
         ClipboardManager manager = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         if (manager != null) {
-            manager.setPrimaryClip(ClipData.newPlainText("Bridge", text));
+            manager.setPrimaryClip(ClipData.newPlainText("NearDoc", text));
         }
     }
 

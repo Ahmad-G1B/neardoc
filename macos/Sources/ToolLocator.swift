@@ -1,7 +1,7 @@
 import Foundation
 
 /// Auto-discovers `adb` and `scrcpy` across bundled app resources, Apple Silicon Homebrew,
-/// Intel Homebrew, Android Studio SDK, and PATH so Bridge works on any Mac.
+/// Intel Homebrew, Android Studio SDK, and PATH so NearDoc works on any Mac.
 enum ToolLocator {
     private static let searchDirs: [String] = {
         var dirs: [String] = []

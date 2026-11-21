@@ -44,7 +44,7 @@ final class LinkBridgeApp: NSObject, NSApplicationDelegate, UNUserNotificationCe
             backing: .buffered,
             defer: false
         )
-        window.title = "Bridge"
+        window.title = "NearDoc"
         window.isReleasedWhenClosed = false
         window.center()
         window.contentView = makeView()
@@ -99,7 +99,7 @@ final class LinkBridgeApp: NSObject, NSApplicationDelegate, UNUserNotificationCe
         setupMacNotifications()
         refreshPairedUI(paired: pairingHost.isPaired, deviceName: pairingHost.pairedDeviceName)
         pairingHost.startIfPaired()
-        record("Bridge opened")
+        record("NearDoc opened")
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
@@ -123,12 +123,12 @@ final class LinkBridgeApp: NSObject, NSApplicationDelegate, UNUserNotificationCe
         let appMenuItem = NSMenuItem()
         mainMenu.addItem(appMenuItem)
         let appMenu = NSMenu()
-        appMenu.addItem(withTitle: "Show Bridge Window", action: #selector(reopenMainWindow), keyEquivalent: "0")
+        appMenu.addItem(withTitle: "Show NearDoc Window", action: #selector(reopenMainWindow), keyEquivalent: "0")
         appMenu.addItem(.separator())
-        appMenu.addItem(withTitle: "Hide Bridge", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
+        appMenu.addItem(withTitle: "Hide NearDoc", action: #selector(NSApplication.hide(_:)), keyEquivalent: "h")
         appMenu.addItem(withTitle: "Close Window", action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
         appMenu.addItem(.separator())
-        appMenu.addItem(withTitle: "Quit Bridge", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        appMenu.addItem(withTitle: "Quit NearDoc", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         appMenuItem.submenu = appMenu
         NSApp.mainMenu = mainMenu
     }
@@ -205,7 +205,7 @@ final class LinkBridgeApp: NSObject, NSApplicationDelegate, UNUserNotificationCe
         logo.image = logoImage()
         logo.imageScaling = .scaleProportionallyUpOrDown
 
-        let title = NSTextField(labelWithString: "Bridge")
+        let title = NSTextField(labelWithString: "NearDoc")
         title.font = .boldSystemFont(ofSize: 28)
 
         pairedBadge = NSTextField(labelWithString: "Not paired over Wi-Fi")
@@ -297,7 +297,7 @@ final class LinkBridgeApp: NSObject, NSApplicationDelegate, UNUserNotificationCe
         qrView.imageScaling = .scaleProportionallyUpOrDown
         qrView.isHidden = true
 
-        qrHint = NSTextField(wrappingLabelWithString: "Scan with Bridge on your phone. Keep both devices on the same Wi-Fi.")
+        qrHint = NSTextField(wrappingLabelWithString: "Scan with NearDoc on your phone. Keep both devices on the same Wi-Fi.")
         qrHint.alignment = .center
         qrHint.font = .systemFont(ofSize: 12)
         qrHint.textColor = .secondaryLabelColor
@@ -564,11 +564,11 @@ final class LinkBridgeApp: NSObject, NSApplicationDelegate, UNUserNotificationCe
         proc.waitUntilExit()
         activePushProcess = nil
         if pushCancelled {
-            throw NSError(domain: "Bridge", code: -1, userInfo: [NSLocalizedDescriptionKey: "Transfer stopped by user."])
+            throw NSError(domain: "NearDoc", code: -1, userInfo: [NSLocalizedDescriptionKey: "Transfer stopped by user."])
         }
         guard proc.terminationStatus == 0 else {
             let msg = String(data: data, encoding: .utf8) ?? "adb push failed"
-            throw NSError(domain: "Bridge", code: Int(proc.terminationStatus), userInfo: [NSLocalizedDescriptionKey: msg])
+            throw NSError(domain: "NearDoc", code: Int(proc.terminationStatus), userInfo: [NSLocalizedDescriptionKey: msg])
         }
     }
 
@@ -587,11 +587,11 @@ final class LinkBridgeApp: NSObject, NSApplicationDelegate, UNUserNotificationCe
             pauseTransferButton.title = "⏸ Pause transfer"
             pauseTransferButton.isEnabled = true
             stopTransferButton.isEnabled = true
-            status.stringValue = "Sending \(urls.count) file(s) to phone Downloads/Bridge…"
+            status.stringValue = "Sending \(urls.count) file(s) to phone Downloads/NearDoc…"
             DispatchQueue.global(qos: .userInitiated).async { [weak self] in
                 guard let self else { return }
                 do {
-                    _ = try self.run(ToolLocator.adbPath(), ["-s", serial, "shell", "mkdir", "-p", "/sdcard/Download/Bridge"])
+                    _ = try self.run(ToolLocator.adbPath(), ["-s", serial, "shell", "mkdir", "-p", "/sdcard/Download/NearDoc"])
                     var sentNames: [String] = []
                     for (idx, url) in urls.enumerated() {
                         if self.pushCancelled { break }
@@ -599,7 +599,7 @@ final class LinkBridgeApp: NSObject, NSApplicationDelegate, UNUserNotificationCe
                         DispatchQueue.main.async {
                             self.status.stringValue = "Sending (\(idx + 1)/\(urls.count)): \(name)…"
                         }
-                        let remotePath = "/sdcard/Download/Bridge/\(name)"
+                        let remotePath = "/sdcard/Download/NearDoc/\(name)"
                         try self.runAdbPush(serial, localPath: url.path, remotePath: remotePath)
                         _ = try? self.run(ToolLocator.adbPath(), ["-s", serial, "shell", "am", "broadcast", "-a", "android.intent.action.MEDIA_SCANNER_SCAN_FILE", "-d", "file://\(remotePath)"])
                         sentNames.append(name)
@@ -610,7 +610,7 @@ final class LinkBridgeApp: NSObject, NSApplicationDelegate, UNUserNotificationCe
                         self.pauseTransferButton.isEnabled = false
                         self.stopTransferButton.isEnabled = false
                         if !self.pushCancelled {
-                            self.status.stringValue = "Sent to phone Downloads/Bridge: \(summary)"
+                            self.status.stringValue = "Sent to phone Downloads/NearDoc: \(summary)"
                             self.record("ADB pushed \(sentNames.count) file(s) to \(serial): \(summary)")
                         }
                     }
@@ -692,7 +692,7 @@ final class LinkBridgeApp: NSObject, NSApplicationDelegate, UNUserNotificationCe
     }
 
     private func mirrorConvenienceFlags() -> [String] {
-        var flags = ["--stay-awake", "--push-target=/sdcard/Download/Bridge/"]
+        var flags = ["--stay-awake", "--push-target=/sdcard/Download/NearDoc/"]
         if screenOffCheckbox?.state == .on {
             flags.append("--turn-screen-off")
         }
@@ -707,7 +707,7 @@ final class LinkBridgeApp: NSObject, NSApplicationDelegate, UNUserNotificationCe
             status.stringValue = "No USB or Wi-Fi ADB phone connected to record."
             return
         }
-        let panel = NSSavePanel(); panel.nameFieldStringValue = "Bridge-Recording.mp4"; panel.allowedContentTypes = [.mpeg4Movie]
+        let panel = NSSavePanel(); panel.nameFieldStringValue = "NearDoc-Recording.mp4"; panel.allowedContentTypes = [.mpeg4Movie]
         guard panel.runModal() == .OK, let url = panel.url else { return }
         launchScrcpy(
             ["-s", serial, "--max-size=1024", "--video-bit-rate=6M", "--max-fps=60", "--video-codec=h264", "--no-audio", "--mouse=sdk", "--keyboard=sdk", "--record", url.path],
@@ -816,7 +816,7 @@ final class LinkBridgeApp: NSObject, NSApplicationDelegate, UNUserNotificationCe
                     } else {
                         self.qrView.image = nil
                         self.qrView.isHidden = true
-                        self.qrHint.stringValue = "Scan with Bridge on your phone. Keep both devices on the same Wi-Fi."
+                        self.qrHint.stringValue = "Scan with NearDoc on your phone. Keep both devices on the same Wi-Fi."
                         self.qrHint.isHidden = true
                     }
                 }
@@ -1027,7 +1027,7 @@ final class LinkBridgeApp: NSObject, NSApplicationDelegate, UNUserNotificationCe
         task.waitUntilExit()
         let text = String(data: data, encoding: .utf8) ?? ""
         guard task.terminationStatus == 0 else {
-            throw NSError(domain: "LinkBridge", code: Int(task.terminationStatus), userInfo: [NSLocalizedDescriptionKey: text])
+            throw NSError(domain: "NearDoc", code: Int(task.terminationStatus), userInfo: [NSLocalizedDescriptionKey: text])
         }
         return text
     }
@@ -1038,7 +1038,7 @@ final class LinkBridgeApp: NSObject, NSApplicationDelegate, UNUserNotificationCe
             guard mirror.isRunning, let app = NSRunningApplication(processIdentifier: pid) else { return }
             self?.mirrorApplication = app
             app.activate(options: [.activateAllWindows])
-            // Keep LinkBridge window open (don't minimize) so Back/Home/Recents buttons stay handy.
+            // Keep NearDoc window open (don't minimize) so Back/Home/Recents buttons stay handy.
         }
     }
 
@@ -1134,6 +1134,6 @@ final class LinkBridgeApp: NSObject, NSApplicationDelegate, UNUserNotificationCe
     }
 
     @objc private func stopMirror() { process?.terminate(); process = nil; hideFloatingNav(); status.stringValue = "Mirroring stopped."; record("Mirror stopped by user") }
-    @objc private func showLog() { let alert = NSAlert(); alert.messageText = "Bridge diagnostic log"; alert.informativeText = log.joined(separator: "\n"); alert.addButton(withTitle: "Close"); alert.runModal() }
+    @objc private func showLog() { let alert = NSAlert(); alert.messageText = "NearDoc diagnostic log"; alert.informativeText = log.joined(separator: "\n"); alert.addButton(withTitle: "Close"); alert.runModal() }
     private func record(_ text: String) { let row = "\(ISO8601DateFormatter().string(from: Date()))  \(text)"; log.append(row); if log.count > 40 { log.removeFirst() } }
 }

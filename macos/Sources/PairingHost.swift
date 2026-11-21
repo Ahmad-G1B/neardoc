@@ -10,7 +10,7 @@ struct QueuedMacFile {
     let size: Int64
 }
 
-/// Persistent local-network bridge server for LinkBridge.
+/// Persistent local-network server for NearDoc.
 /// Handles one-time QR pairing (HMAC-SHA256), high-speed streaming file transfer, and clipboard sync.
 final class PairingHost {
     private static let tokenKey = "linkbridge.paired.token"
@@ -133,7 +133,7 @@ final class PairingHost {
     func receivedFilesDirectory() -> URL {
         let downloads = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first
             ?? URL(fileURLWithPath: NSHomeDirectory()).appendingPathComponent("Downloads")
-        let folder = downloads.appendingPathComponent("Bridge", isDirectory: true)
+        let folder = downloads.appendingPathComponent("NearDoc", isDirectory: true)
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         return folder
     }
@@ -192,7 +192,7 @@ final class PairingHost {
     private func emitQRCode() {
         guard activePort > 0, !pairSecret.isEmpty else { return }
         pairingCode = "LB1|\(hostAddress)|\(activePort)|\(pairSecret)"
-        notifyStatus("Scan this QR code with Bridge on your phone (\(hostAddress):\(activePort)).")
+        notifyStatus("Scan this QR code with NearDoc on your phone (\(hostAddress):\(activePort)).")
         let codeCopy = pairingCode
         DispatchQueue.main.async { [weak self] in self?.onPairingCode?(codeCopy) }
     }
@@ -393,7 +393,7 @@ final class PairingHost {
                 DispatchQueue.main.async { self.onTransferStateChanged?(false, false) }
                 if success {
                     reader.sendAndClose("OK\n")
-                    self.notifyStatus("Saved \(destURL.lastPathComponent) (\(totalMB) MB) to Downloads/Bridge.")
+                    self.notifyStatus("Saved \(destURL.lastPathComponent) (\(totalMB) MB) to Downloads/NearDoc.")
                     DispatchQueue.main.async { self.onFileReceived?(destURL) }
                 } else {
                     try? FileManager.default.removeItem(at: destURL)

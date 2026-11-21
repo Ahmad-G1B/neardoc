@@ -2,8 +2,9 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-APP="$ROOT/build/Bridge.app"
-DMG="$ROOT/dist/Bridge-macOS.dmg"
+APP="$ROOT/build/NearDoc.app"
+DMG="$ROOT/dist/NearDoc-macOS.dmg"
+ZIP="$ROOT/dist/NearDoc-macOS.zip"
 
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$ROOT/dist" "$ROOT/build/module-cache"
 
@@ -20,15 +21,15 @@ cat > "$APP/Contents/Info.plist" <<'EOF'
 <plist version="1.0">
 <dict>
 	<key>CFBundleDisplayName</key>
-	<string>Bridge</string>
+	<string>NearDoc</string>
 	<key>CFBundleExecutable</key>
-	<string>Bridge</string>
+	<string>NearDoc</string>
 	<key>CFBundleIconFile</key>
 	<string>LinkBridge.icns</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.shahnawaz.bridge.mac</string>
+	<string>com.shahnawaz.neardoc.mac</string>
 	<key>CFBundleName</key>
-	<string>Bridge</string>
+	<string>NearDoc</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -48,12 +49,12 @@ cat > "$APP/Contents/Info.plist" <<'EOF'
 		<string>_adb-tls-connect._tcp</string>
 	</array>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Bridge connects directly to your Android phone on your local network.</string>
+	<string>NearDoc connects directly to your Android phone on your local network.</string>
 </dict>
 </plist>
 EOF
 
-echo "Compiling Bridge.app..."
+echo "Compiling NearDoc.app..."
 swiftc \
   -module-cache-path "$ROOT/build/module-cache" \
   -parse-as-library \
@@ -63,18 +64,15 @@ swiftc \
   "$ROOT/macos/Sources/PhoneFilesPanel.swift" \
   "$ROOT/macos/Sources/WirelessQrPairer.swift" \
   "$ROOT/macos/Sources/main.swift" \
-  -o "$APP/Contents/MacOS/Bridge"
+  -o "$APP/Contents/MacOS/NearDoc"
 
 codesign --force --deep --sign - "$APP"
 
-echo "Packaging Bridge-macOS.dmg..."
-STAGE="$ROOT/build/dmg-stage"
-rm -rf "$STAGE" "$DMG"
-mkdir -p "$STAGE"
-cp -R "$APP" "$STAGE/"
-ln -s /Applications "$STAGE/Applications"
-hdiutil create -volname "Bridge" -srcfolder "$STAGE" -ov -format UDZO "$DMG"
-rm -rf "$STAGE"
-
+rm -f "$ZIP"
+ditto -c -k --sequesterRsrc --keepParent "$APP" "$ZIP"
 echo "Built: $APP"
-echo "Packaged: $DMG"
+echo "Packaged: $ZIP"
+
+if hdiutil create -volname "NearDoc" -srcfolder "$APP" -ov -format UDZO "$DMG" 2>/dev/null; then
+  echo "Packaged: $DMG"
+fi
