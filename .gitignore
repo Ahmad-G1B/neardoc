@@ -1,0 +1,19 @@
+# macOS & IDE
+.DS_Store
+*.swp
+.idea/
+.vscode/
+
+# Build outputs & local caches
+build/
+dist/
+android/build/
+android/app/build/
+android/.gradle/
+android/local.properties
+
+# Keystores & secrets (never commit signing keys)
+*.jks
+*.keystore
+keystore.properties
+build-and-install-android.sh
