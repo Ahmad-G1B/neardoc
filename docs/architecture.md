@@ -1,41 +1,28 @@
-# Architecture contract
+# NearDoc Architecture
 
-## Products
+## Overview
 
-`Local Link for Android` is a Kotlin/Java Android application. `Local Link for Mac` is a native Swift application. They use a small versioned protocol called LL/1.
+NearDoc is a 100% local-only Mac ↔ Android companion composed of two native apps:
 
-## Pairing and transport
+- **NearDoc for macOS** (`macos/Sources/`): Native Swift / AppKit application.
+- **NearDoc for Android** (`android/app/src/main/java/com/locallink/android/`): Native Java Android companion application.
 
-1. The Mac displays a QR code containing a short-lived pairing endpoint, protocol version, Mac public key, and a random nonce.
-2. The phone scans it, shows the Mac's name and a six-word verification phrase, and asks the user to confirm.
-3. Each side creates an ephemeral key agreement and derives a session key. The long-lived device public keys are saved only after the user confirms the phrase on both devices.
-4. Later connections use mutual authentication from the stored keys and are encrypted. A pairing ticket expires after two minutes and is single-use.
+All communication stays strictly over USB or the local Wi-Fi network. NearDoc has no cloud backend, no relay servers, and no telemetry.
 
-The endpoint must be a USB tunnel or private LAN address. Internet-routable endpoints and cloud relays are intentionally rejected.
+## Components
 
-## Capabilities
+### 1. Screen Mirroring, Input & Camera (`main.swift`, `ToolLocator.swift`, `WirelessQrPairer.swift`)
+- Auto-discovers `adb` and `scrcpy` across bundled app resources, Apple Silicon Homebrew (`/opt/homebrew/bin`), Intel Homebrew (`/usr/local/bin`), Android Studio SDK, and `PATH`.
+- Launches `scrcpy` over USB or local Wi-Fi with free-cursor input (`--mouse=sdk --keyboard=sdk`), `--stay-awake`, optional `--turn-screen-off`, and `--push-target=/sdcard/Download/NearDoc/`.
+- Supports Wireless Debugging pairing via both 6-digit pairing code (`adb pair`) and QR code (local mDNS `_adb-tls-pairing._tcp`).
+- Provides an always-on-top collapsible **Phone Controls** bar for Back, Home, Recents, Close App, Notifications, Quick Panel, Phone Files, Answer/Decline Call, and Power.
 
-Capabilities are negotiated individually for every connection:
+### 2. Fast USB / Wi-Fi File Drag & Drop (`PhoneFilesPanel.swift`, `main.swift`)
+- **Mac → Phone:** Dragging onto the mirror window (`scrcpy` push target) or using **Send file to phone…** runs `adb push` into `/sdcard/Download/NearDoc/` and triggers Android's media scanner.
+- **Phone → Mac:** `PhoneFilesPanel` lists universal Android folders (All Recent Videos, Camera, Screenshots, Screen Recordings, Movies, Downloads, NearDoc Folder, Documents) and uses `NSFilePromiseProvider` + `adb pull` for native drag-out to Finder, with Pause/Resume (`SIGSTOP`/`SIGCONT`) and Stop controls.
 
-| Capability | Android approval | Notes |
-| --- | --- | --- |
-| files | Android file picker | Uses user-selected files; no broad storage scan. |
-| screen | MediaProjection prompt | Android shows its own capture prompt for each session. |
-| camera | Camera permission | Separate from screen sharing. |
-| notifications | Notification listener setting | Preview/reply support remains opt-in. |
-| input | Accessibility setting | Private-build feature only until Play-policy review is completed. |
-| clipboard | Session opt-in | Best effort; no background clipboard surveillance. |
-
-The Mac must show an active-session indicator and a one-click Disconnect action. The Android foreground-service notification must say what is sharing and provide Stop.
-
-## Implementation order
-
-- **Foundation (current):** package structure, consent-first Android shell, foreground capture service contract, protocol contract, and independent Mac target.
-- **Milestone 1:** encrypted pairing plus trusted-device store and one-direction file transfer.
-- **Milestone 2:** H.264/HEVC screen transport with adaptive bitrate; never raw JPEG frames.
-- **Milestone 3:** remote input, notifications, and clipboard as independent permissions.
-- **Milestone 4:** camera and Core Media I/O virtual camera extension.
-
-## Out of scope
-
-- iPhone support, cellular/internet relay, phone call recording, device-management features, bypassing Android protected screens, and any automatic action on the phone.
+### 3. Local Wi-Fi Pairing, File Transfer, Clipboard & Notifications (`PairingHost.swift`, `PairingClient.java`, `NotificationBridgeService.java`)
+- **Pairing:** The Mac starts a local TCP listener (preferred port `39874`) and displays a QR code containing the local IPv4 address, port, and a single-use pairing secret. Both sides perform an HMAC-SHA256 challenge-response handshake and store a per-session token locally.
+- **File Streaming:** Large files stream directly over TCP with 1 MB buffered disk writes on macOS and 256 KB chunked writes on Android, with Pause/Resume and Stop support on both devices.
+- **Clipboard Sync:** On-demand two-way text clipboard sync (and automatic image/file URI fallback on Android).
+- **Notifications & Calls:** `NotificationBridgeService` (opt-in Android Notification Listener) forwards phone notifications and incoming calls to macOS Notification Center (`UNUserNotificationCenter`), with interactive **Accept Call** and **Decline Call** actions.

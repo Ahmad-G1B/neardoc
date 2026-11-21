@@ -841,7 +841,7 @@ final class LinkBridgeApp: NSObject, NSApplicationDelegate, UNUserNotificationCe
 
         let container = NSView(frame: NSRect(x: 0, y: 0, width: 320, height: 64))
         let hostField = NSTextField(frame: NSRect(x: 0, y: 36, width: 320, height: 24))
-        hostField.placeholderString = "IP address & Port (e.g. 192.168.31.72:37123)"
+        hostField.placeholderString = "IP address & Port (e.g. 192.168.1.50:37123)"
         let codeField = NSTextField(frame: NSRect(x: 0, y: 4, width: 320, height: 24))
         codeField.placeholderString = "6-digit Wi-Fi pairing code"
         container.addSubview(hostField)
