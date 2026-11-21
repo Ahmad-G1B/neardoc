@@ -27,7 +27,8 @@ public final class NotificationBridgeService extends NotificationListenerService
 
         boolean isCall = Notification.CATEGORY_CALL.equals(notif.category)
             || pkg.contains("incallui")
-            || pkg.contains("dialer");
+            || pkg.contains("dialer")
+            || pkg.contains("telecom");
 
         // Allow incoming call notifications even when marked ongoing, but skip other ongoing/summary notifications.
         if (!isCall && ((notif.flags & Notification.FLAG_ONGOING_EVENT) != 0 || (notif.flags & Notification.FLAG_GROUP_SUMMARY) != 0)) {

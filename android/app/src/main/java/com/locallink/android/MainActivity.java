@@ -29,7 +29,7 @@ import com.journeyapps.barcodescanner.ScanOptions;
 import java.util.List;
 
 /**
- * O+ Connect-style local companion for LinkBridge:
+ * Local-only Android companion for Bridge:
  * QR pairing, two-way Wi-Fi file transfer, and clipboard sync.
  */
 public final class MainActivity extends AppCompatActivity {

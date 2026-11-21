@@ -30,7 +30,7 @@ final class WirelessQrPairer: NSObject, NetServiceBrowserDelegate, NetServiceDel
 
         let payload = "WIFI:T:ADB;S:\(serviceName);P:\(password);;"
         onQrPayload?(payload)
-        onStatus?("On your Galaxy S24: Settings → Developer options → Wireless debugging → Pair device with QR code, then scan this QR.")
+        onStatus?("On your Android phone: Settings → Developer options → Wireless debugging → Pair device with QR code, then scan this QR.")
 
         // Ensure adb server is running so mdns discovery is active too.
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
@@ -68,7 +68,7 @@ final class WirelessQrPairer: NSObject, NetServiceBrowserDelegate, NetServiceDel
 
     func netServiceBrowser(_ browser: NetServiceBrowser, didFind service: NetService, moreComing: Bool) {
         guard !pairingTriggered else { return }
-        // Samsung One UI may advertise its own service name instead of the QR's S: token, so resolve any pairing service.
+        // Some Android OEMs advertise their own service name instead of the QR's S: token, so resolve any pairing service.
         service.delegate = self
         resolvingServices.append(service)
         service.resolve(withTimeout: 8.0)

@@ -212,7 +212,7 @@ final class LinkBridgeApp: NSObject, NSApplicationDelegate, UNUserNotificationCe
         pairedBadge.font = .systemFont(ofSize: 13, weight: .medium)
         pairedBadge.textColor = .secondaryLabelColor
 
-        let subtitle = NSTextField(wrappingLabelWithString: "O+ Connect-style local bridge for your Mac and Galaxy S24: low-latency mirroring, trackpad navigation controls, instant file transfer, clipboard sync, and camera preview.")
+        let subtitle = NSTextField(wrappingLabelWithString: "Private, local-only Mac ↔ Android companion: low-latency mirroring, trackpad navigation, drag-and-drop files, clipboard sync, notifications, and camera preview.")
         subtitle.maximumNumberOfLines = 0
         subtitle.textColor = .secondaryLabelColor
 
@@ -288,7 +288,7 @@ final class LinkBridgeApp: NSObject, NSApplicationDelegate, UNUserNotificationCe
         controlsStack.setCustomSpacing(16, after: screenOffCheckbox)
         controlsStack.setCustomSpacing(18, after: navHint)
 
-        status = NSTextField(wrappingLabelWithString: "Ready. Start USB or Wi-Fi mirroring, or send files directly to your S24.")
+        status = NSTextField(wrappingLabelWithString: "Ready. Start USB or Wi-Fi mirroring, or send files directly to your Android phone.")
         status.maximumNumberOfLines = 4
         status.font = .systemFont(ofSize: 13)
 
@@ -629,13 +629,13 @@ final class LinkBridgeApp: NSObject, NSApplicationDelegate, UNUserNotificationCe
 
         // Fallback: Wi-Fi QR bridge queue
         guard pairingHost.isPaired else {
-            status.stringValue = "Connect your S24 via USB/Wi-Fi mirroring or pair with QR first."
+            status.stringValue = "Connect your Android phone via USB/Wi-Fi mirroring or pair with QR first."
             return
         }
         let count = pairingHost.queueFilesForPhone(urls)
         if count > 0 {
             let names = urls.map(\.lastPathComponent).joined(separator: ", ")
-            status.stringValue = "Queued \(count) file(s) for Wi-Fi bridge: \(names). Open Bridge on your S24 to receive."
+            status.stringValue = "Queued \(count) file(s) for Wi-Fi transfer: \(names). Open the companion app on your phone to receive."
             record("Queued \(count) file(s) for phone: \(names)")
         }
     }
@@ -650,9 +650,9 @@ final class LinkBridgeApp: NSObject, NSApplicationDelegate, UNUserNotificationCe
             queued = pairingHost.queueClipboardForPhone(text)
         }
         if process?.isRunning == true {
-            status.stringValue = "Clipboard ready (\(text.count) chars). Press Cmd+V inside the phone mirror window to paste, or open Bridge on your S24."
+            status.stringValue = "Clipboard ready (\(text.count) chars). Press Cmd+V inside the phone mirror window to paste, or open the phone app."
         } else if queued {
-            status.stringValue = "Queued Mac clipboard (\(text.count) chars). Open Bridge on your S24 (or tap Get Mac clipboard)."
+            status.stringValue = "Queued Mac clipboard (\(text.count) chars). Open the phone app (or tap Get Mac clipboard)."
         } else {
             status.stringValue = "Start mirroring (then press Cmd+V in the mirror) or pair with QR to sync clipboard."
         }
@@ -811,7 +811,7 @@ final class LinkBridgeApp: NSObject, NSApplicationDelegate, UNUserNotificationCe
                     if let payload {
                         self.qrView.image = self.makeQRCode(payload)
                         self.qrView.isHidden = false
-                        self.qrHint.stringValue = "Scan in S24 Settings → Developer options → Wireless debugging → Pair device with QR code."
+                        self.qrHint.stringValue = "Scan in Android Settings → Developer options → Wireless debugging → Pair device with QR code."
                         self.qrHint.isHidden = false
                     } else {
                         self.qrView.image = nil
@@ -835,7 +835,7 @@ final class LinkBridgeApp: NSObject, NSApplicationDelegate, UNUserNotificationCe
         wirelessQrPairer?.stop(clearQR: true)
         let alert = NSAlert()
         alert.messageText = "Pair Wireless Debugging (6-Digit Code)"
-        alert.informativeText = "On your Galaxy S24: Settings → Developer options → Wireless debugging → Pair device with pairing code. Keep that popup OPEN and enter the IP:Port shown inside it."
+        alert.informativeText = "On your Android phone: Settings → Developer options → Wireless debugging → Pair device with pairing code. Keep that popup OPEN and enter the IP:Port shown inside it."
         alert.addButton(withTitle: "Pair & Connect")
         alert.addButton(withTitle: "Cancel")
 
@@ -895,11 +895,11 @@ final class LinkBridgeApp: NSObject, NSApplicationDelegate, UNUserNotificationCe
     private func promptForWirelessEndpoint() -> String? {
         let alert = NSAlert()
         alert.messageText = "Connect over Wi-Fi (No USB)"
-        alert.informativeText = "Auto-discovery did not find your phone on this Wi-Fi network.\n\nOn your Galaxy S24, open Settings → Developer options → Wireless debugging and enter the IP address & Port shown there:"
+        alert.informativeText = "Auto-discovery did not find your phone on this Wi-Fi network.\n\nOn your Android phone, open Settings → Developer options → Wireless debugging and enter the IP address & Port shown there:"
         alert.addButton(withTitle: "Connect")
         alert.addButton(withTitle: "Cancel")
         let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
-        field.placeholderString = "e.g. 192.168.31.72:41892"
+        field.placeholderString = "e.g. 192.168.1.50:41892"
         if let saved = UserDefaults.standard.string(forKey: "linkbridge.wifi.endpoint") {
             field.stringValue = saved
         }
@@ -909,6 +909,18 @@ final class LinkBridgeApp: NSObject, NSApplicationDelegate, UNUserNotificationCe
         return value.isEmpty ? nil : value
     }
 
+    private func phoneWiFiIP(usbSerial: String) -> String? {
+        if let route = try? run(ToolLocator.adbPath(), ["-s", usbSerial, "shell", "ip", "route", "get", "1.1.1.1"]),
+           let match = route.range(of: "(?<=\\bsrc )\\d{1,3}(?:\\.\\d{1,3}){3}", options: .regularExpression) {
+            return String(route[match])
+        }
+        if let addr = try? run(ToolLocator.adbPath(), ["-s", usbSerial, "shell", "ip", "-f", "inet", "addr", "show", "wlan0"]),
+           let match = addr.range(of: "(?<=\\binet )\\d{1,3}(?:\\.\\d{1,3}){3}", options: .regularExpression) {
+            return String(addr[match])
+        }
+        return nil
+    }
+
     @objc private func connectWiFi() {
         if let process, process.isRunning {
             process.terminationHandler = nil
@@ -916,7 +928,7 @@ final class LinkBridgeApp: NSObject, NSApplicationDelegate, UNUserNotificationCe
             self.process = nil
         }
         let savedKey = "linkbridge.wifi.endpoint"
-        status.stringValue = "Connecting to your Galaxy S24 over Wi-Fi…"
+        status.stringValue = "Connecting to your Android phone over Wi-Fi…"
 
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self else { return }
@@ -948,12 +960,10 @@ final class LinkBridgeApp: NSObject, NSApplicationDelegate, UNUserNotificationCe
                     }
                 }
 
-                // 4. If USB is plugged in, read Wi-Fi IP FIRST, then enable tcpip 5555, wait, and connect!
+                // 4. If USB is plugged in, read Wi-Fi IP FIRST (with wlan0 fallback), then enable tcpip 5555, wait, and connect!
                 if resolvedEndpoint == nil, let usbSerial = deviceRows.first(where: { !$0.contains(":") }) {
-                    DispatchQueue.main.async { self.status.stringValue = "Reading S24 Wi-Fi IP and enabling wireless mode…" }
-                    let route = try self.run(ToolLocator.adbPath(), ["-s", usbSerial, "shell", "ip", "route", "get", "1.1.1.1"])
-                    if let match = route.range(of: "(?<=\\bsrc )\\d{1,3}(?:\\.\\d{1,3}){3}", options: .regularExpression) {
-                        let ip = String(route[match])
+                    DispatchQueue.main.async { self.status.stringValue = "Reading phone Wi-Fi IP and enabling wireless mode…" }
+                    if let ip = self.phoneWiFiIP(usbSerial: usbSerial) {
                         let candidate = "\(ip):5555"
                         _ = try self.run(ToolLocator.adbPath(), ["-s", usbSerial, "tcpip", "5555"])
                         Thread.sleep(forTimeInterval: 2.0)
@@ -963,7 +973,7 @@ final class LinkBridgeApp: NSObject, NSApplicationDelegate, UNUserNotificationCe
                     }
                 }
 
-                // 5. Fallback: ask user for the IP:Port from S24 Wireless Debugging screen (works even if router blocks mDNS)
+                // 5. Fallback: ask user for the IP:Port from Android Wireless Debugging screen (works even if router blocks mDNS)
                 if resolvedEndpoint == nil {
                     var manual: String?
                     DispatchQueue.main.sync { manual = self.promptForWirelessEndpoint() }

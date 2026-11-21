@@ -1,6 +1,6 @@
 # Bridge
 
-Private, local-only Mac ↔ Android companion app — inspired by O+ Connect, built with native Swift (macOS) and Java (Android).
+Private, local-only Mac ↔ Android companion app built with native Swift (macOS) and Java (Android).
 
 No cloud accounts, no relay servers, no tracking. Everything stays on your USB cable or local Wi-Fi network.
 
@@ -31,9 +31,11 @@ No cloud accounts, no relay servers, no tracking. Everything stays on your USB c
 1. **Install on Mac:** Download `Bridge-macOS.dmg` from [Releases](../../releases), open it, and drag **Bridge** to **Applications**.
    - *First launch (unsigned open-source build):* Right-click **Bridge.app → Open**, or run `xattr -cr /Applications/Bridge.app` if macOS Gatekeeper warns about an unidentified developer.
 2. **Install on Android:** Download `bridge-android.apk` from [Releases](../../releases) and install it on your Android phone (or install over USB via `adb install -r bridge-android.apk`).
-3. **Enable USB Debugging on Android:**
-   - Open **Settings → About phone → Software information** and tap **Build number** 7 times.
+3. **Enable USB Debugging on Android (works on Pixel, Samsung, OnePlus, Xiaomi, Motorola, Nothing, etc.):**
+   - Open **Settings → About phone** (or **Software information**) and tap **Build number** 7 times.
    - Open **Settings → Developer options** and enable **USB debugging** (and **Wireless debugging** for cable-free Wi-Fi mirroring).
+   - *Xiaomi / Redmi / POCO (MIUI / HyperOS):* Also enable **USB debugging (Security settings)** in Developer options to allow Mac mouse/keyboard control.
+   - *Oppo / OnePlus / Realme:* If touch input is blocked, enable **Disable permission monitoring** in Developer options.
 4. **Connect:**
    - Plug in via USB (a USB 3.2 data cable is recommended for fast multi-GB video transfers) and click **USB** in Bridge, or click **Connect over Wi-Fi (No USB)** on the same local Wi-Fi network.
    - Click **Pair phone with QR** in Bridge and scan it in the Android **Bridge** app for Wi-Fi file transfers, clipboard sync, and macOS Notification Center alerts.
@@ -55,6 +57,10 @@ bash scripts/build-android.sh
 ## Privacy & Security
 
 See [PRIVACY.md](PRIVACY.md). Bridge never connects to external servers; all local Wi-Fi pairing and session requests are authenticated with per-session HMAC-SHA256 tokens.
+
+## Trademarks & Non-Affiliation
+
+This is an independent open-source project and is not affiliated with, endorsed by, or sponsored by Apple Inc., Google LLC, Samsung Electronics, Adobe Inc., Xiaomi, or OnePlus/OPPO. macOS is a trademark of Apple Inc. Android is a trademark of Google LLC. All other trademarks belong to their respective owners.
 
 ## License
 

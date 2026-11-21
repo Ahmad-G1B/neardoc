@@ -1,7 +1,7 @@
 import AppKit
 import UniformTypeIdentifiers
 
-/// Floating Phone Files browser that supports true macOS Drag & Drop directly from your Galaxy S24
+/// Floating Phone Files browser that supports true macOS Drag & Drop directly from any Android phone
 /// into any Mac Finder folder, project, or app via NSFilePromiseProvider + fast USB/Wi-Fi adb pull.
 final class PhoneFilesPanel: NSObject, NSTableViewDataSource, NSTableViewDelegate, NSFilePromiseProviderDelegate {
     struct RemoteItem {
@@ -12,9 +12,9 @@ final class PhoneFilesPanel: NSObject, NSTableViewDataSource, NSTableViewDelegat
     private let folders: [(label: String, path: String)] = [
         ("All Recent Videos", "__ALL_VIDEOS__"),
         ("Camera (Photos & Videos)", "/sdcard/DCIM/Camera"),
+        ("Screenshots (All Android)", "__ALL_SCREENSHOTS__"),
+        ("Screen Recordings (All Android)", "__ALL_RECORDINGS__"),
         ("Movies", "/sdcard/Movies"),
-        ("Screen Recordings", "/sdcard/DCIM/Screen recordings"),
-        ("Screenshots", "/sdcard/DCIM/Screenshots"),
         ("Downloads", "/sdcard/Download"),
         ("Bridge Folder", "/sdcard/Download/Bridge"),
         ("Documents", "/sdcard/Documents")
@@ -163,7 +163,7 @@ final class PhoneFilesPanel: NSObject, NSTableViewDataSource, NSTableViewDelegat
                 DispatchQueue.main.async {
                     self.items = []
                     self.tableView.reloadData()
-                    self.statusLabel.stringValue = "Connect your S24 over USB or Wi-Fi first."
+                    self.statusLabel.stringValue = "Connect your Android phone over USB or Wi-Fi first."
                 }
                 return
             }
@@ -171,6 +171,24 @@ final class PhoneFilesPanel: NSObject, NSTableViewDataSource, NSTableViewDelegat
             let loaded: [RemoteItem]
             if folder.path == "__ALL_VIDEOS__" {
                 let cmd = "find /sdcard/DCIM /sdcard/Movies /sdcard/Download /sdcard/Pictures -maxdepth 3 -type f \\( -iname '*.mp4' -o -iname '*.mov' -o -iname '*.mkv' -o -iname '*.webm' -o -iname '*.3gp' \\) 2>/dev/null | head -n 80"
+                let output = (try? self.runAdb(["-s", serial, "shell", cmd])) ?? ""
+                loaded = output
+                    .components(separatedBy: .newlines)
+                    .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                    .filter { $0.hasPrefix("/sdcard/") }
+                    .reversed()
+                    .map { path in RemoteItem(name: URL(fileURLWithPath: path).lastPathComponent, remotePath: path) }
+            } else if folder.path == "__ALL_SCREENSHOTS__" {
+                let cmd = "find /sdcard/DCIM/Screenshots /sdcard/Pictures/Screenshots -maxdepth 2 -type f 2>/dev/null | head -n 80"
+                let output = (try? self.runAdb(["-s", serial, "shell", cmd])) ?? ""
+                loaded = output
+                    .components(separatedBy: .newlines)
+                    .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                    .filter { $0.hasPrefix("/sdcard/") }
+                    .reversed()
+                    .map { path in RemoteItem(name: URL(fileURLWithPath: path).lastPathComponent, remotePath: path) }
+            } else if folder.path == "__ALL_RECORDINGS__" {
+                let cmd = "find '/sdcard/DCIM/Screen recordings' /sdcard/DCIM/ScreenRecorder /sdcard/Movies -maxdepth 2 -type f 2>/dev/null | head -n 80"
                 let output = (try? self.runAdb(["-s", serial, "shell", cmd])) ?? ""
                 loaded = output
                     .components(separatedBy: .newlines)
